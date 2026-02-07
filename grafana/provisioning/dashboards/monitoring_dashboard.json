@@ -1,0 +1,41 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Status Kontenerów (Up/Down)",
+      "type": "state-timeline",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "up", "refId": "A" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "Prometheus" }
+    },
+    {
+      "title": "Liczba zapytań do aplikacji (HTTP Requests)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(prometheus_http_requests_total[5m]))", "refId": "A" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "Prometheus" }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": ["monitoring", "dev"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Dashboard Projektowy - Wirtualizacja",
+  "uid": "monitoring_dash_01",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -5,13 +7,13 @@ services:
     networks:
       - backend
     environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: secretpassword123
+      POSTGRES_DB: bazkadanych
+      POSTGRES_USER: userappki
+      POSTGRES_PASSWORD: haslotakzwanesekretne#321
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U appuser"]
+      test: ["CMD-SHELL", "pg_isready -U userappki -d bazkadanych"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,9 +58,9 @@ services:
         condition: service_healthy
     environment:
       DB_HOST: postgres
-      DB_NAME: appdb
-      DB_USER: appuser
-      DB_PASSWORD: secretpassword123
+      DB_NAME: bazkadanych
+      DB_USER: userappki
+      DB_PASSWORD: haslotakzwanesekretne#321
       REDIS_HOST: redis
     expose:
       - "8000"
@@ -97,14 +99,30 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
     ports:
       - "9090:9090"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring-grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
     deploy:
       resources:
         limits:
@@ -115,10 +133,8 @@ services:
 networks:
   backend:
     driver: bridge
-  
   frontend:
     driver: bridge
-  
   monitoring:
     driver: bridge
 
@@ -126,3 +142,4 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
+  grafana_data:
