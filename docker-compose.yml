@@ -1,9 +1,9 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     container_name: app-database
+    networks:
+      - backend
     environment:
       POSTGRES_DB: appdb
       POSTGRES_USER: appuser
@@ -15,10 +15,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   redis:
     image: redis:7-alpine
     container_name: app-cache
+    networks:
+      - backend
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -27,14 +34,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   demo-app:
     build:
       context: ./apps/demo-app
       dockerfile: Dockerfile
     container_name: demo-application
-    ports:
-      - "8000:8000"
+    networks:
+      - backend
+      - frontend
+      - monitoring
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,7 +60,69 @@ services:
       DB_USER: appuser
       DB_PASSWORD: secretpassword123
       REDIS_HOST: redis
+    expose:
+      - "8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: reverse-proxy
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - demo-app
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitoring-prometheus
+    networks:
+      - monitoring
+      - backend
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+
+networks:
+  backend:
+    driver: bridge
+  
+  frontend:
+    driver: bridge
+  
+  monitoring:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
