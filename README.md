@@ -1,4 +1,4 @@
-# 📊 Monitoring Platform - Project Virtualization & Containerization
+# 📊 Wirtualizacja i konteneryzacja - Platforma Monitorująca
 
 Projekt przedstawia zaawansowaną architekturę mikrousługową z pełnym stossem monitorującym. Został zbudowany z naciskiem na bezpieczeństwo sieciowe (izolacja warstw), limity zasobów oraz automatyczną konfigurację (Infrastructure as Code).
 
